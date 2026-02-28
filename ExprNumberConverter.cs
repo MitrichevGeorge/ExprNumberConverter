@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
 using YamlDotNet.Serialization;
@@ -7,6 +8,13 @@ using Expression = NCalc.Expression;
 
 class ExprNumberConverter : IYamlTypeConverter
 {
+    private readonly IReadOnlyDictionary<string, object> constants;
+
+    public ExprNumberConverter(IReadOnlyDictionary<string, object> constants)
+    {
+        this.constants = constants ?? throw new ArgumentNullException(nameof(constants));
+    }
+
     public bool Accepts(Type type) =>
         type == typeof(int) || type == typeof(int?) ||
         type == typeof(long) || type == typeof(long?) ||
@@ -24,10 +32,12 @@ class ExprNumberConverter : IYamlTypeConverter
         try
         {
             var expr = new Expression(s);
-            expr.Parameters["A"] = Program.A; // <- тут константы которые нам надо
+            foreach (var kv in constants)
+            {
+                expr.Parameters[kv.Key] = kv.Value;
+            }
 
             object result = expr.Evaluate();
-
             return ConvertToTargetType(result, type);
         }
         catch (Exception ex)
