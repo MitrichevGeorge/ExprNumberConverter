@@ -8,7 +8,6 @@ using Expression = NCalc.Expression;
 
 public partial class Program
 {
-    public const double A = 401;
     static void Main()
     {
         string yaml = """
@@ -18,14 +17,20 @@ public partial class Program
             precision: A / 127.5
             """;
 
+        var myConstants = new Dictionary<string, object>
+        {
+            ["A"] = 401,
+        };
+
+        var converter = new ExprNumberConverter(myConstants);
+
         var deserializer = new DeserializerBuilder()
             .WithNamingConvention(CamelCaseNamingConvention.Instance)
-            .WithTypeConverter(new ExprNumberConverter())
+            .WithTypeConverter(converter)
             .Build();
-
         var cfg = deserializer.Deserialize<Config>(yaml);
 
-        Console.WriteLine($"A (const) = {A}");
+        Console.WriteLine($"A (const) = {myConstants["A"]}");
         Console.WriteLine($"Count     = {cfg.Count}");
         Console.WriteLine($"BigValue  = {cfg.BigValue}");
         Console.WriteLine($"Ratio     = {cfg.Ratio}");
